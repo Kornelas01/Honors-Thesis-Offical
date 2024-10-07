@@ -1,0 +1,108 @@
+---
+title: "Honors Thesis Official"
+author: "Karen Ornelas"
+date: "9/23/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##install.packages("tidyverse")
+library(tidyverse)
+```
+
+
+```{r}
+## Read Pennie's  .csv into R as an object
+library(readr)
+Pennie_df <- read_csv("Pennie_Clean_Data")
+```
+
+
+```{r}
+## Take out unique species name
+
+```
+
+
+```{r}
+##see if you can remove year from data on pennie df
+library(stringr)
+Pennie_Timeline_df <- Pennie_df[c("Scientific_name","Observation_date")]
+
+Pennie_Timeline_df <- Pennie_Timeline_df %>%
+  mutate(Year = 
+    str_extract(Observation_date,"^.{4}"))
+
+Pennie_Timeline_df <- Pennie_Timeline_df[-c(2)]
+
+```
+
+
+```{r}
+## Create new dataframe
+Pennie_Timeline_df_unique <- Pennie_Timeline_df %>%
+  distinct(Year,Scientific_name, .keep_all = TRUE)
+
+```
+
+
+```{r}
+Pennie_Timeline_df_unique <-  Pennie_Timeline_df_unique %>% 
+  group_by(Scientific_name) %>%
+  count()
+
+```
+
+
+```{r}
+## do same process but pheno = start, filter where pheno =  start 
+Pennie_Timeline_Start <- Pennie_df[c("Scientific_name","Pheno","Observation_date")]
+
+Pennie_Timeline_Start <-  filter(Pennie_Timeline_Start, Pheno == "Start")
+
+Pennie_Timeline_Start <- Pennie_Timeline_Start %>%
+  mutate(Year = 
+    str_extract(Observation_date,"^.{4}"))
+
+library(lubridate)
+Pennie_Timeline_Start <- Pennie_Timeline_Start %>%
+  mutate(DOY = yday(Pennie_Timeline_Start$Observation_date))
+
+Pennie_Timeline_Start <- Pennie_Timeline_Start[-c(2)]
+
+Pennie_Timeline_Start <-  Pennie_Timeline_Start %>% 
+  mutate(Year = as.numeric(Pennie_Timeline_Start$Year))  
+         
+str(Pennie_Timeline_Start)
+
+
+```
+
+GGplot
+```{r}
+library(ggplot2)
+
+Pennie_Timeline_df_10 <- Pennie_Timeline_df_unique %>% 
+  filter(n >= 10)
+
+Pennie_Timeline_Start_10 <- Pennie_Timeline_Start %>% 
+  filter(Scientific_name %in% Pennie_Timeline_df_10$Scientific_name)
+
+### is this correct?
+test_plot <- ggplot(Pennie_Timeline_Start_10, aes(x=Year, y=DOY, color=Scientific_name)) +
+             geom_point() +
+             #xlim(min(Pennie_Timeline_Start$Year), max(Pennie_Timeline_Start$Year)) +
+             #ylim(min(Pennie_Timeline_Start$DOY), max(Pennie_Timeline_Start$DOY)) +
+             facet_wrap(. ~ Scientific_name, nrow = 4, ncol = 10)
+
+print(test_plot)
+```
+
+
+```{r}
+```
+
