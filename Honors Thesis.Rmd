@@ -22,11 +22,6 @@ Pennie_df <- read_csv("Pennie_Clean_Data")
 ```
 
 
-```{r}
-## Take out unique species name
-
-```
-
 
 ```{r}
 ##see if you can remove year from data on pennie df
@@ -59,7 +54,7 @@ Pennie_Timeline_df_unique <-  Pennie_Timeline_df_unique %>%
 
 
 ```{r}
-## do same process but pheno = start, filter where pheno =  start 
+## do same process but filter where pheno =  start 
 Pennie_Timeline_Start <- Pennie_df[c("Scientific_name","Pheno","Observation_date")]
 
 Pennie_Timeline_Start <-  filter(Pennie_Timeline_Start, Pheno == "Start")
@@ -93,16 +88,82 @@ Pennie_Timeline_Start_10 <- Pennie_Timeline_Start %>%
   filter(Scientific_name %in% Pennie_Timeline_df_10$Scientific_name)
 
 ### is this correct?
-test_plot <- ggplot(Pennie_Timeline_Start_10, aes(x=Year, y=DOY, color=Scientific_name)) +
+Penny_plot <- ggplot(Pennie_Timeline_Start_10, aes(x=Year, y=DOY, color=Scientific_name)) +
              geom_point() +
              #xlim(min(Pennie_Timeline_Start$Year), max(Pennie_Timeline_Start$Year)) +
              #ylim(min(Pennie_Timeline_Start$DOY), max(Pennie_Timeline_Start$DOY)) +
              facet_wrap(. ~ Scientific_name, nrow = 4, ncol = 10)
 
-print(test_plot)
+print(Penny_plot)
+
+ggsave("Pennie_Timeline_Start_10.pdf")
 ```
 
 
 ```{r}
+Thoreau_df <- read_csv("Clean_Thoreau_Data.csv")
+Thoreau_df <- filter(Thoreau_df, Kingdom == "Plantae")
+```
+
+```{r}
+Thoreau_Timeline_df <- Thoreau_df[c("Scientific_name","year")]
+
+```
+
+
+```{r}
+## Create new dataframe
+Thoreau_Timeline_df_unique <- Thoreau_Timeline_df %>%
+  distinct(year,Scientific_name, .keep_all = TRUE)
+
+```
+
+
+```{r}
+Thoreau_Timeline_df_unique <-  Thoreau_Timeline_df_unique %>% 
+  group_by(Scientific_name) %>%
+  count()
+
+```
+
+
+```{r}
+## do same process but filter where pheno =  start 
+Thoreau_Timeline_Start <- Thoreau_df[c("Scientific_name","Phenophase","DOY","year")]
+
+## what should my starting pheno be?
+Thoreau_Timeline_Start <-  filter(Thoreau_Timeline_Start, Phenophase == "FirstFlower")
+
+Thoreau_Timeline_Start <- Thoreau_Timeline_Start[-c(2)]
+
+Thoreau_Timeline_Start <-  Thoreau_Timeline_Start %>% 
+  mutate(year = as.numeric(Thoreau_Timeline_Start$year))  
+
+str(Thoreau_Timeline_Start)
+
+
+```
+
+GGplot
+```{r}
+library(ggplot2)
+
+Thoreau_Timeline_df_10 <- Thoreau_Timeline_df_unique %>% 
+  filter(n >= 10)
+
+Thoreau_Timeline_Start_10 <- Thoreau_Timeline_Start %>% 
+  filter(Scientific_name %in% Thoreau_Timeline_df_10$Scientific_name) %>%
+  filter(Scientific_name %in% Pennie_Timeline_df_10$Scientific_name)
+
+### is this correct?
+Thoreau_plot <- ggplot(Thoreau_Timeline_Start_10, aes(x=year, y=DOY, color=Scientific_name)) +
+             geom_point() +
+             #xlim(min(Thoreau_Timeline_Start$year), max(Thoreau_Timeline_Start$year)) +
+             #ylim(min(Thoreau_Timeline_Start$DOY), max(Thoreau_Timeline_Start$DOY)) +
+             facet_wrap(. ~ Scientific_name, nrow = 21, ncol = 8)
+
+print(Thoreau_plot)
+
+ggsave("Thoreau_Timeline_Start_10.pdf")
 ```
 
