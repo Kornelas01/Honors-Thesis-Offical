@@ -39,7 +39,7 @@ Pennie_Timeline_df <- Pennie_Timeline_df[-c(2)]
 
 ```{r}
 ## Create new dataframe
-Pennie_Timeline_df_unique <- Pennie_Timeline_df %>%
+Pennie_Timeline_df_Pennie_Mean_plot <- Pennie_Timeline_df %>%
   distinct(Year,Scientific_name, .keep_all = TRUE)
 
 ```
@@ -137,7 +137,9 @@ Thoreau_Timeline_Start <-  filter(Thoreau_Timeline_Start, Phenophase == "FirstFl
 Thoreau_Timeline_Start <- Thoreau_Timeline_Start[-c(2)]
 
 Thoreau_Timeline_Start <-  Thoreau_Timeline_Start %>% 
-  mutate(year = as.numeric(Thoreau_Timeline_Start$year))  
+  mutate(year = as.numeric(Thoreau_Timeline_Start$year))
+  
+names(Thoreau_Timeline_Start)[names(Thoreau_Timeline_Start) == "year"] <- "Year"
 
 str(Thoreau_Timeline_Start)
 
@@ -151,19 +153,169 @@ library(ggplot2)
 Thoreau_Timeline_df_10 <- Thoreau_Timeline_df_unique %>% 
   filter(n >= 10)
 
+
 Thoreau_Timeline_Start_10 <- Thoreau_Timeline_Start %>% 
   filter(Scientific_name %in% Thoreau_Timeline_df_10$Scientific_name) %>%
   filter(Scientific_name %in% Pennie_Timeline_df_10$Scientific_name)
 
 ### is this correct?
-Thoreau_plot <- ggplot(Thoreau_Timeline_Start_10, aes(x=year, y=DOY, color=Scientific_name)) +
+Thoreau_plot <- ggplot(Thoreau_Timeline_Start_10, aes(x=Year, y=DOY, color=Scientific_name)) +
              geom_point() +
              #xlim(min(Thoreau_Timeline_Start$year), max(Thoreau_Timeline_Start$year)) +
              #ylim(min(Thoreau_Timeline_Start$DOY), max(Thoreau_Timeline_Start$DOY)) +
-             facet_wrap(. ~ Scientific_name, nrow = 21, ncol = 8)
+             facet_wrap(. ~ Scientific_name, nrow = 21, ncol = 8) + 
+            theme(legend.position = "top")
 
 print(Thoreau_plot)
 
 ggsave("Thoreau_Timeline_Start_10.pdf")
+
+##do a bind rows of thoreau + pennie
+```
+
+```{r}
+Combined_Timeline_df <- bind_rows(Pennie_Timeline_Start,Thoreau_Timeline_Start)
+
+Combined_Timeline_df_unique <- Combined_Timeline_df %>%
+  distinct(Year,Scientific_name, .keep_all = TRUE)
+
+Combined_Timeline_df_unique <-  Combined_Timeline_df_unique %>% 
+  group_by(Scientific_name) %>%
+  count()
+```
+
+
+```{r}
+Combined_Timeline_df_15 <- Combined_Timeline_df_unique %>% 
+  filter(n >= 15)
+
+
+Combined_Timeline_Start_15 <- Combined_Timeline_df %>% 
+  filter(Scientific_name %in% Combined_Timeline_df_15$Scientific_name)
+
+unique(Combined_Timeline_df_15$Scientific_name)
+
+
+
+### is this correct?
+Combined_plot <- ggplot(Combined_Timeline_Start_15, aes(x=Year, y=DOY, color=Scientific_name)) +
+             geom_point() +
+             #xlim(min(Combined_Timeline_Start$year), max(Combined_Timeline_Start$year)) +
+             #ylim(min(Combined_Timeline_Start$DOY), max(Combined_Timeline_Start$DOY)) +
+             facet_wrap(. ~ Scientific_name) + 
+            theme(legend.position = "top")
+
+print(Combined_plot)
+```
+
+```{r}
+## work in progress trying to find the 30 sum species that were used for the regression analysis in the original paper. It was said that 
+
+Combined_Timeline_df_19 <- Combined_Timeline_df_unique%>% 
+  filter(n >= 19)
+
+hist(Combined_Timeline_df_19$n)
+
+```
+Try to filter out DOY to only show first flowering happening in May and April
+```{r}
+Thoreau_Timeline_EarlySpring <- Thoreau_Timeline_Start %>%
+  filter(DOY >= 92 & DOY <= 152) %>%
+  group_by(Scientific_name) %>%  # Replace 'Species' with the column for species names
+  slice_min(Year) %>%     # Select the row with the earliest DOY for each species
+  ungroup()              # Ungroup to return a regular dataframe
+
+# Grabbing all species within the first flower dataframe and filtering them to only include the Species whos first data entry occured between April and May
+Thoreau_Mean <- Thoreau_Timeline_Start %>%
+  filter(Scientific_name %in% Thoreau_Timeline_EarlySpring$Scientific_name)
+
+# Creating an average DOY for each species 
+Thoreau_Mean <- Thoreau_Mean %>%
+  group_by(Scientific_name) %>%
+  mutate(Mean_FF_Date = round(mean(DOY, na.rm = TRUE))) %>%
+  ungroup()
+
+# Create a new df that groups it by year and find the average DOY 
+Thoreau_Graph <- Thoreau_Mean %>%
+  group_by(Year) %>%  # Using year to create a yearly average
+  summarize(Mean_FF_Date = round(mean(DOY, na.rm = TRUE)))  # Calculate and round the mean DOY
+
+Thoreau_Mean_plot <- ggplot(Thoreau_Graph, aes(x=Year, y=Mean_FF_Date)) +
+             geom_point() +
+             #xlim(min(Thoreau_Timeline_Start$year), max(Thoreau_Timeline_Start$year)) +
+             #ylim(min(Thoreau_Timeline_Start$DOY), max(Thoreau_Timeline_Start$DOY)) 
+            theme(legend.position = "top")
+
+print(Thoreau_Mean_plot)
+
+ggsave("Thoreau_Mean_plot.pdf")
+
+```
+
+```{r}
+#Do the same for Pennie's's data and see if it has a similar trend for her period of collection
+
+Pennie_Timeline_EarlySpring <- Pennie_Timeline_Start %>%
+  filter(DOY >= 92 & DOY <= 152) %>%
+  group_by(Scientific_name) %>%  # Replace 'Species' with the column for species names
+  slice_min(Year) %>%     # Select the row with the earliest DOY for each species
+  ungroup()              # Ungroup to return a regular dataframe
+
+# Grabbing all species within the first flower dataframe and filtering them to only include the Species whos first data entry occured between April and May
+Pennie_Mean <- Pennie_Timeline_Start %>%
+  filter(Scientific_name %in% Pennie_Timeline_EarlySpring$Scientific_name)
+
+# Creating an average DOY for each species 
+Pennie_Mean <- Pennie_Mean %>%
+  group_by(Scientific_name) %>%
+  mutate(Mean_FF_Date = round(mean(DOY, na.rm = TRUE))) %>%
+  ungroup()
+
+# Create a new df that groups it by year and find the average DOY 
+Pennie_Graph <- Pennie_Mean %>%
+  group_by(Year) %>%  # Using year to create a yearly average
+  summarize(Mean_FF_Date = round(mean(DOY, na.rm = TRUE)))  # Calculate and round the mean DOY
+
+Pennie_Mean_plot <- ggplot(Pennie_Graph, aes(x=Year, y=Mean_FF_Date)) +
+             geom_point() +
+             #xlim(min(Pennie_Timeline_Start$year), max(Pennie_Timeline_Start$year)) +
+             #ylim(min(Pennie_Timeline_Start$DOY), max(Pennie_Timeline_Start$DOY)) 
+            theme(legend.position = "top")
+
+print(Pennie_Mean_plot)
+
+ggsave("Pennie_Mean_plot.pdf")
+```
+
+
+```{r}
+# Lets combine the graphs together 
+Combined_Timeline_Earlyspring <- bind_rows(Pennie_Timeline_EarlySpring,Thoreau_Timeline_EarlySpring)
+
+Combined_Mean <- Combined_Timeline_df %>%
+  filter(Scientific_name %in% Combined_Timeline_Earlyspring$Scientific_name)
+
+Combined_Mean <- Combined_Mean %>%
+  group_by(Scientific_name) %>%
+  mutate(Mean_FF_Date = round(mean(DOY, na.rm = TRUE))) %>%
+  ungroup()
+
+unique(Combined_Mean$Year)
+
+Combined_Graph <- Combined_Mean %>%
+  group_by(Year) %>%  # Using year to create a yearly average
+  summarize(Mean_FF_Date = round(mean(DOY, na.rm = TRUE)))  # Calculate and round the mean DOY
+
+Combined_Mean_plot <- ggplot(Combined_Graph, aes(x=Year, y=Mean_FF_Date)) +
+             geom_point() +
+             #xlim(min(Combined_Timeline_df$year), max(Combined_Timeline_df$year)) +
+             #ylim(min(Combined_Timeline_df$DOY), max(Combined_Timeline_df$DOY)) 
+            theme(legend.position = "top") +
+            scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+            scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
+
+print(Combined_Mean_plot)
+
+ggsave("Combined_Mean_plot.pdf")
 ```
 
