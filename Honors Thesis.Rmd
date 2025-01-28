@@ -83,10 +83,19 @@ library(ggplot2)
 
 Pennie_Timeline_df_10 <- Pennie_Timeline_df_unique %>% 
   filter(n >= 10)
+Pennie_Timeline_df_12 <- Pennie_Timeline_df_unique %>% 
+  filter(n >= 12)
+Pennie_Timeline_df_15 <- Pennie_Timeline_df_unique %>% 
+  filter(n >= 15)
 
 Pennie_Timeline_Start_10 <- Pennie_Timeline_Start %>% 
   filter(Scientific_name %in% Pennie_Timeline_df_10$Scientific_name)
 
+Pennie_Timeline_Start_12 <- Pennie_Timeline_Start %>% 
+  filter(Scientific_name %in% Pennie_Timeline_df_12$Scientific_name)
+
+Pennie_Timeline_Start_15 <- Pennie_Timeline_Start %>% 
+  filter(Scientific_name %in% Pennie_Timeline_df_15$Scientific_name)
 ### is this correct?
 Penny_plot <- ggplot(Pennie_Timeline_Start_10, aes(x=Year, y=DOY, color=Scientific_name)) +
              geom_point() +
@@ -317,5 +326,30 @@ Combined_Mean_plot <- ggplot(Combined_Graph, aes(x=Year, y=Mean_FF_Date)) +
 print(Combined_Mean_plot)
 
 ggsave("Combined_Mean_plot.pdf")
+```
+
+linear regression 
+```{r}
+lm
+data = Combined_Graph
+y = day of year ~ year
+
+```
+
+
+```{r}
+## We need to find a benchmark year in Pennie's data where all species are accounted for
+
+distinct(Pennie_Timeline_Start_10, Scientific_name)
+
+Pennie_Timeline_df_uniques_species <-  Pennie_Timeline_Start_12 %>% 
+  group_by(Year) %>%
+  count()
+```
+
+```{r}
+ggplot(Pennie_Timeline_df_10, aes(x = Year, y = Scientific_name)) +
+  geom_point() +
+  theme_bw()
 ```
 
