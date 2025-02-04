@@ -1,0 +1,139 @@
+---
+title: "Pennie_Data_Thesis"
+author: "Karen Ornelas"
+date: "1/30/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+## Read Pennie's  .csv into R as an object
+library(readr)
+library(tidyverse)
+Pennie_df <- read_csv("Pennie_Clean_Data")
+```
+
+```{r}
+## Add a DOY into the original Pennie_df to help with finding first flower data later
+library(lubridate)
+Pennie_df <- Pennie_df %>%
+  mutate(DOY = yday(Pennie_df$Observation_date))
+
+## Add a year columun to help with later calcuations to find ff
+Pennie_df <- Pennie_df %>%
+  mutate(Year = 
+    str_extract(Observation_date,"^.{4}"))
+```
+
+
+```{r}
+##see if you can remove year from data on pennie df
+library(stringr)
+Pennie_Timeline_df <- Pennie_df[c("Scientific_name","Observation_date")]
+
+Pennie_Timeline_df <- Pennie_Timeline_df %>%
+  mutate(Year = 
+    str_extract(Observation_date,"^.{4}"))
+
+Pennie_Timeline_df <- Pennie_Timeline_df[-c(2)]
+
+```
+
+
+```{r}
+## Create new dataframe DO WE NEED THIS?
+Pennie_Timeline_df_Pennie_Mean_plot <- Pennie_Timeline_df %>%
+  distinct(Year,Scientific_name, .keep_all = TRUE)
+
+```
+
+
+```{r}
+Pennie_Timeline_df_unique_species <-  Pennie_Timeline_df %>% 
+  group_by(Scientific_name) %>%
+  count()
+
+```
+
+
+```{r}
+## do same process but filter where pheno =  start 
+Pennie_Timeline_Start <- Pennie_df[c("Scientific_name","Pheno","Observation_date")]
+
+Pennie_Timeline_Start <-  filter(Pennie_Timeline_Start, Pheno == "Start")
+
+Pennie_Timeline_Start <- Pennie_Timeline_Start %>%
+  mutate(Year = 
+    str_extract(Observation_date,"^.{4}"))
+
+library(lubridate)
+Pennie_Timeline_Start <- Pennie_Timeline_Start %>%
+  mutate(DOY = yday(Pennie_Timeline_Start$Observation_date))
+
+Pennie_Timeline_Start <- Pennie_Timeline_Start[-c(2)]
+
+Pennie_Timeline_Start <-  Pennie_Timeline_Start %>% 
+  mutate(Year = as.numeric(Pennie_Timeline_Start$Year))  
+         
+str(Pennie_Timeline_Start)
+```
+
+```{r}
+## We need to find a benchmark year in Pennie's data where all species are accounted for
+Pennie_Timeline_benchmark <-  Pennie_df %>% 
+  group_by(Year) %>%
+  count()
+
+## Benchmark year appears to be 1970 -- create a species list for this year 
+## Is there a more nested way of doing this
+Pennie_Benchmark_Species <- Pennie_Timeline_df %>%
+  group_by(Scientific_name) %>%
+  group_by(Year = "1970")
+
+Pennie_Benchmark_Species <- distinct(Pennie_Benchmark_Species)
+
+```
+
+```{r}
+Pennie_Timeline_df_10 <- Pennie_Timeline_df_unique_species %>% 
+  filter(n >= 10)
+```
+
+```{r}
+## use the benchmark species to find the average doy for bechmark
+## is there a better way to do this
+Pennie_Benchmark_Mean <- Pennie_df %>%
+  filter(Year == "1970") %>%
+  group_by(Scientific_name) %>%
+  mutate(Mean_FF_Date = round(mean(DOY, na.rm = TRUE))) %>%
+  ungroup()
+
+Pennie_Benchmark_Mean <- Pennie_Benchmark_Mean %>%
+  filter(Pheno == "Start")
+
+Pennie_Benchmark_Mean <- Pennie_Benchmark_Mean[-c(6)]
+
+Pennie_Benchmark_Mean <- distinct(Pennie_Benchmark_Mean)
+
+Pennie_Benchmark_Mean <-Pennie_Benchmark_Mean %>%
+  mutate(DOY = Mean_FF_Date)
+
+Pennie_Benchmark_Mean <- Pennie_Benchmark_Mean[-c(12)]
+
+```
+
+```{r}
+## Subtract the DOY from each species from doy of benchmark_mean = FFD
+
+# Perform the subtraction and store the result in pennie_benchmark_mean
+FFD_df <- Pennie_Benchmark_Mean %>%
+  left_join(Pennie_df, by = "Scientific_name", suffix = c("_benchmark", "_pennie"))   %>%
+  mutate(FFD = DOY_benchmark - DOY_pennie) %>%
+  select(Scientific_name, DOY_benchmark, DOY_pennie, FFD)
+```
+
