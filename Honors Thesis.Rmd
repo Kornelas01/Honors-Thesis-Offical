@@ -21,6 +21,12 @@ library(readr)
 Pennie_df <- read_csv("Pennie_Clean_Data")
 ```
 
+```{r}
+## Add a DOY into the original Pennie_df to help with finding first flower data later
+library(lubridate)
+Pennie_df <- Pennie_df %>%
+  mutate(DOY = yday(Pennie_Timeline_df$Observation_date))
+```
 
 
 ```{r}
@@ -226,6 +232,7 @@ Combined_Timeline_df_19 <- Combined_Timeline_df_unique%>%
 hist(Combined_Timeline_df_19$n)
 
 ```
+
 Try to filter out DOY to only show first flowering happening in May and April
 ```{r}
 Thoreau_Timeline_EarlySpring <- Thoreau_Timeline_Start %>%
@@ -327,13 +334,6 @@ print(Combined_Mean_plot)
 
 ggsave("Combined_Mean_plot.pdf")
 ```
-
-linear regression 
-```{r}
-lm
-data = Combined_Graph
-y = day of year ~ year
-
 ```
 
 

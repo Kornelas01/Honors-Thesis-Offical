@@ -63,24 +63,11 @@ Pennie_Timeline_df_unique_species <-  Pennie_Timeline_df %>%
 
 ```{r}
 ## do same process but filter where pheno =  start 
-Pennie_Timeline_Start <- Pennie_df[c("Scientific_name","Pheno","Observation_date")]
-
-Pennie_Timeline_Start <-  filter(Pennie_Timeline_Start, Pheno == "Start")
-
-Pennie_Timeline_Start <- Pennie_Timeline_Start %>%
-  mutate(Year = 
-    str_extract(Observation_date,"^.{4}"))
-
-library(lubridate)
-Pennie_Timeline_Start <- Pennie_Timeline_Start %>%
-  mutate(DOY = yday(Pennie_Timeline_Start$Observation_date))
-
-Pennie_Timeline_Start <- Pennie_Timeline_Start[-c(2)]
-
-Pennie_Timeline_Start <-  Pennie_Timeline_Start %>% 
-  mutate(Year = as.numeric(Pennie_Timeline_Start$Year))  
-         
-str(Pennie_Timeline_Start)
+Pennie_Timeline_Start <- Pennie_df %>% 
+  filter(Pheno == "Start") %>% 
+  mutate(Year = str_extract(Observation_date,"^.{4}"),
+         Year = as.numeric(Year),
+        DOY = yday(Observation_date)) 
 ```
 
 ```{r}
@@ -89,51 +76,54 @@ Pennie_Timeline_benchmark <-  Pennie_df %>%
   group_by(Year) %>%
   count()
 
-## Benchmark year appears to be 1970 -- create a species list for this year 
-## Is there a more nested way of doing this
-Pennie_Benchmark_Species <- Pennie_Timeline_df %>%
-  group_by(Scientific_name) %>%
-  group_by(Year = "1970")
-
-Pennie_Benchmark_Species <- distinct(Pennie_Benchmark_Species)
-
 ```
 
-```{r}
-Pennie_Timeline_df_10 <- Pennie_Timeline_df_unique_species %>% 
-  filter(n >= 10)
-```
 
 ```{r}
 ## use the benchmark species to find the average doy for bechmark
 ## is there a better way to do this
-Pennie_Benchmark_Mean <- Pennie_df %>%
-  filter(Year == "1970") %>%
+Pennie_Benchmark_Species <- Pennie_df %>%
+  filter(Year == "1970", Pheno == "Start" ) %>%
   group_by(Scientific_name) %>%
-  mutate(Mean_FF_Date = round(mean(DOY, na.rm = TRUE))) %>%
-  ungroup()
+  mutate(Mean_FF_Date = DOY) %>%
 
-Pennie_Benchmark_Mean <- Pennie_Benchmark_Mean %>%
-  filter(Pheno == "Start")
 
-Pennie_Benchmark_Mean <- Pennie_Benchmark_Mean[-c(6)]
+```
 
-Pennie_Benchmark_Mean <- distinct(Pennie_Benchmark_Mean)
 
-Pennie_Benchmark_Mean <-Pennie_Benchmark_Mean %>%
-  mutate(DOY = Mean_FF_Date)
+```{r}
+# Creating a DF with species that have at least 10 records of observation to then be compared the benchmark species 
 
-Pennie_Benchmark_Mean <- Pennie_Benchmark_Mean[-c(12)]
+Pennie_Timeline_df_10 <- Pennie_Timeline_df_unique_species %>% 
+  filter(n >= 10)
 
+Pennie_per_Year_10 <- semi_join(Pennie_Timeline_Start, Pennie_Timeline_df_10) %>%
+  group_by(Year) %>%
+  count()
+
+Pennie_Benchmark_10 <- semi_join(Pennie_Benchmark_Species, Pennie_Timeline_df_10)
 ```
 
 ```{r}
 ## Subtract the DOY from each species from doy of benchmark_mean = FFD
 
 # Perform the subtraction and store the result in pennie_benchmark_mean
-FFD_df <- Pennie_Benchmark_Mean %>%
-  left_join(Pennie_df, by = "Scientific_name", suffix = c("_benchmark", "_pennie"))   %>%
+FFD_df <- Pennie_Timeline_Start %>%
+  inner_join(Pennie_Benchmark_10, by = "Scientific_name", suffix = c("_pennie", "_benchmark"))   %>%
   mutate(FFD = DOY_benchmark - DOY_pennie) %>%
-  select(Scientific_name, DOY_benchmark, DOY_pennie, FFD)
+  select(Scientific_name, Year_pennie, DOY_pennie, DOY_benchmark, FFD)
+
+# Find the average FFD by year within the FFD_df
+FFD_mean_year <- FFD_df %>%
+  group_by(Year_pennie) %>%
+  summarize(mean_FFD = mean(FFD))
+```
+
+Plot FFD 
+```{r}
+ggplot(FFD_mean_year, aes(Year_pennie, mean_FFD)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
 ```
 
