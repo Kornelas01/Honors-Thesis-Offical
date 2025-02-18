@@ -1,9 +1,9 @@
 # Pull Weather Data for Close to Concord, MA
 # EKB, February 2025
 
-#remotes::install_github("ropensci/rnoaa")
+remotes::install_github("ropensci/rnoaa")
 library(rnoaa)
-library(dplyr)
+library(tidyverse)
 
 # API key
 options(noaakey = "rPKDOqboLvtJRwAobBIoHefeQJOusyiJ")
@@ -42,4 +42,21 @@ for (station in c("GHCND:USC00190535", "GHCND:USW00014702")) {
   
 }
 
+# get summary of data
+temps2 <- temps |> 
+  mutate(date = ymd_hms(date),
+         year = year(date),
+         temp = value / 10)
 
+temps2_annual <- temps2 |> 
+  mutate(month = month(date)) |> 
+  group_by(year, month) |> 
+  summarise(min_temp = min(temp), 
+            max_temp = max(temp), 
+            mean_temp = mean(temp))
+
+
+
+# save data
+write_csv(temps2, "bedford_daily_weather.csv")
+write_csv(temps2_annual, "monthly_temps_summary.csv")
