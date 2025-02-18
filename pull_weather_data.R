@@ -55,8 +55,16 @@ temps2_annual <- temps2 |>
             max_temp = max(temp), 
             mean_temp = mean(temp))
 
-
-
 # save data
 write_csv(temps2, "bedford_daily_weather.csv")
 write_csv(temps2_annual, "monthly_temps_summary.csv")
+
+#-----####
+
+temps2_annual <- read_csv("monthly_temps_summary.csv")
+
+monthly_wide <- temps2_annual |> 
+  select(-min_temp, -max_temp) |> 
+  pivot_wider(names_from = month, names_prefix = "month", values_from = mean_temp)
+
+weather_ffd <- full_join(FFD_df, monthly_wide, join_by(Year_pennie == year))
