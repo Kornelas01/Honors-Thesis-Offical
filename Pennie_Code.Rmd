@@ -85,7 +85,8 @@ Pennie_Timeline_benchmark <-  Pennie_df %>%
 Pennie_Benchmark_Species <- Pennie_df %>%
   filter(Year == "1970", Pheno == "Start" ) %>%
   group_by(Scientific_name) %>%
-  mutate(Mean_FF_Date = DOY) %>%
+  mutate(Mean_FF_Date = DOY) |> 
+  filter(Scientific_name != "Eupatorium rugosum")
 
 
 ```
@@ -125,5 +126,96 @@ ggplot(FFD_mean_year, aes(Year_pennie, mean_FFD)) +
   geom_point() +
   geom_smooth(method = "lm") +
   theme_bw()
+
+summary(lm(FFD_mean_year$mean_FFD ~ FFD_mean_year$Year_pennie))
+```
+
+
+
+
+
+## Blue Hill Observatory Weather Data
+
+```{r}
+# read in data
+weather <- read_csv("BlueHillObservatory_Temperature_Mean_2828_Monthly_v2.4.csv", skip = 4, col_names = TRUE) |> 
+  select(Year:December) |> 
+  drop_na()
+```
+Get data in long format
+```{r}
+weather_long <- weather |> 
+  pivot_longer(January:December,
+               names_to = "Month",
+               values_to = "Avg_Temp")
+weather_long
+
+#write_csv(weather_long, "BlueHill_weather_long.csv")
+```
+
+### Combine BH Weather and FFD
+
+```{r}
+FFD_weather <- left_join(FFD_df, weather, join_by(Year_pennie == Year)) |> 
+  filter(FFD >= -30, FFD <= 30)
+```
+
+Check FFD that are above 25
+```{r}
+# FFD_weather |> 
+#   filter(FFD > 25)
+# 
+# FFD_weather |> 
+#   filter(Scientific_name == "Eupatorium rugosum")
+```
+
+
+January
+```{r}
+ggplot(FFD_weather, aes(FFD, January)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+jan_lm <- lm(FFD ~ January, data = FFD_weather)
+summary(jan_lm)
+```
+
+```{r}
+ggplot(FFD_weather, aes(FFD, February)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+feb_lm <- lm(FFD ~ February, data = FFD_weather)
+summary(feb_lm)
+```
+March
+
+```{r}
+ggplot(FFD_weather, aes(FFD, March)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+march_lm <- lm(FFD ~ March, data = FFD_weather)
+summary(march_lm)
+```
+
+April
+```{r}
+ggplot(FFD_weather, aes(April, FFD, color = Scientific_name)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+april_lm <- lm(FFD ~ April, data = FFD_weather)
+summary(april_lm)
+```
+
+May
+```{r}
+ggplot(FFD_weather, aes(May, FFD)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+may_lm <- lm(FFD ~ May, data = FFD_weather)
+summary(may_lm)
 ```
 
