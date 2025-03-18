@@ -219,3 +219,62 @@ may_lm <- lm(FFD ~ May, data = FFD_weather)
 summary(may_lm)
 ```
 
+### Early Flowering Species
+
+Plot start dates for only species with >= 10 years of data
+```{r}
+Pennie_Start <-  Pennie_Timeline_Start |> 
+  group_by(Scientific_name) |> 
+  count()
+
+ggplot(Pennie_Start, aes(n)) +
+  geom_histogram()
+
+Pennie_Start_5 <- Pennie_Timeline_Start |> 
+  group_by(Scientific_name) |> 
+  count() |> 
+  filter(n >= 5)
+
+start_5years <- semi_join(Pennie_Timeline_Start, Pennie_Start_5)
+
+start_5years |> group_by(Scientific_name) |> count()
+
+ggplot(start_5years, aes(x = Year, y = DOY)) +
+  geom_point()
+
+ggplot(start_10years, aes(x = Year, y = DOY, color = Scientific_name)) +
+  geom_point()
+```
+Species that flower by the end of May at least once in the dataset
+
+```{r}
+pre_june_species <- start_5years |> 
+  filter(DOY <= 152) |> 
+  distinct(Scientific_name)
+
+start_5years_prejune <- semi_join(start_5years, pre_june_species) |> 
+  filter(DOY < 250)
+
+# number of data points per species
+start_5years_prejune |> group_by(Scientific_name) |> count()
+
+# how many species per year
+start_10years_prejune |> group_by(Year) |> count()
+
+ggplot(start_5years_prejune, aes(x = Year, y = DOY)) +
+  geom_point(aes(color = Scientific_name)) +
+  geom_smooth(method = "lm")
+
+# species in reference year
+early_species_1970 <- start_10years_prejune |> 
+  filter(Year == 1970) |> 
+  distinct()
+
+# how many years of data for species in 1970
+prejune_10years_1970 <- semi_join(start_10years_prejune, early_species_1970, join_by(Scientific_name)) 
+
+ggplot(prejune_10years_1970, aes(x = Year, y = DOY)) +
+  geom_point(aes(color = Scientific_name)) +
+  geom_smooth(method = "lm")
+```
+
