@@ -52,7 +52,7 @@ Pennie_Timeline_df_Pennie_Mean_plot <- Pennie_Timeline_df %>%
 
 
 ```{r}
-Pennie_Timeline_df_unique <-  Pennie_Timeline_df_unique %>% 
+Pennie_Timeline_df_unique <-  Pennie_Timeline_df%>% 
   group_by(Scientific_name) %>%
   count()
 
@@ -187,6 +187,13 @@ ggsave("Thoreau_Timeline_Start_10.pdf")
 
 ##do a bind rows of thoreau + pennie
 ```
+
+```{r}
+# number of shared species between Thoreau and Pennie
+
+intersect(Pennie_Timeline_Start$Scientific_name, Thoreau_Timeline_Start$Scientific_name)
+```
+
 
 ```{r}
 Combined_Timeline_df <- bind_rows(Pennie_Timeline_Start,Thoreau_Timeline_Start)

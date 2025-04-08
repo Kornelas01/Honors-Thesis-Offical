@@ -131,9 +131,6 @@ summary(lm(FFD_mean_year$mean_FFD ~ FFD_mean_year$Year_pennie))
 ```
 
 
-
-
-
 ## Blue Hill Observatory Weather Data
 
 ```{r}
@@ -172,13 +169,24 @@ Check FFD that are above 25
 
 January
 ```{r}
-ggplot(FFD_weather, aes(FFD, January)) +
+ggplot(FFD_weather, aes(FFD, January, , color = Scientific_name)) +
   geom_point() +
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm", se = FALSE)
 
 jan_lm <- lm(FFD ~ January, data = FFD_weather)
 summary(jan_lm)
 ```
+
+```{r}
+FFD_weather %>% group_by(Year_pennie) %>%
+  summarise(DOY = mean(DOY_pennie),
+            Jan = mean(January),
+            March = mean(March)) %>%
+  ggplot(., aes(DOY, March)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
 
 ```{r}
 ggplot(FFD_weather, aes(FFD, February)) +
@@ -235,7 +243,7 @@ Pennie_Start_5 <- Pennie_Timeline_Start |>
   count() |> 
   filter(n >= 5)
 
-start_5years <- semi_join(Pennie_Timeline_Start, Pennie_Start_5)
+start_5years <- semi_join(Pennie_Timeline_Start, Pennie_Start_10)
 
 start_5years |> group_by(Scientific_name) |> count()
 
@@ -245,6 +253,7 @@ ggplot(start_5years, aes(x = Year, y = DOY)) +
 ggplot(start_10years, aes(x = Year, y = DOY, color = Scientific_name)) +
   geom_point()
 ```
+
 Species that flower by the end of May at least once in the dataset
 
 ```{r}
@@ -259,22 +268,115 @@ start_5years_prejune <- semi_join(start_5years, pre_june_species) |>
 start_5years_prejune |> group_by(Scientific_name) |> count()
 
 # how many species per year
-start_10years_prejune |> group_by(Year) |> count()
+start_5years_prejune |> group_by(Year) |> count()
 
 ggplot(start_5years_prejune, aes(x = Year, y = DOY)) +
   geom_point(aes(color = Scientific_name)) +
   geom_smooth(method = "lm")
 
 # species in reference year
-early_species_1970 <- start_10years_prejune |> 
+early_species_1970 <- start_5years_prejune |> 
   filter(Year == 1970) |> 
   distinct()
 
 # how many years of data for species in 1970
-prejune_10years_1970 <- semi_join(start_10years_prejune, early_species_1970, join_by(Scientific_name)) 
+prejune_5years_1970 <- semi_join(start_5years_prejune, early_species_1970, join_by(Scientific_name)) 
 
-ggplot(prejune_10years_1970, aes(x = Year, y = DOY)) +
+ggplot(prejune_5years_1970, aes(x = Year, y = DOY)) +
   geom_point(aes(color = Scientific_name)) +
   geom_smooth(method = "lm")
 ```
 
+
+```{r}
+# Redoing all the code to now use the prejune species as the benchmark 
+# Rerunning all the ggplots with the new object
+## Subtract the DOY from each species from doy of benchmark_mean = FFD
+
+# Perform the subtraction and store the result in pennie_benchmark_mean
+prejune_FFD_df <- prejune_5years_1970 %>%
+  inner_join(early_species_1970, 
+             by = "Scientific_name", suffix = c("_prejune", "_benchmark"))  %>%
+  mutate(FFD = DOY_benchmark - DOY_prejune) %>%
+  select(Scientific_name, Year_prejune, DOY_prejune, DOY_benchmark, FFD)
+
+# Find the average FFD by year within the prejune_FFD_df
+prejune_FFD_mean_year <- prejune_FFD_df %>%
+  group_by(Year_prejune) %>%
+  summarize(mean_FFD = mean(FFD))
+```
+
+Plot FFD 
+```{r}
+ggplot(prejune_FFD_mean_year, aes(Year_prejune, mean_FFD)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
+
+
+
+summary(lm(prejune_FFD_mean_year$mean_FFD ~ prejune_FFD_mean_year$Year_prejune))
+
+```
+
+### Combine BH Weather and FFD
+
+```{r}
+Prejune_FFD_weather <- left_join(prejune_FFD_df, weather, join_by(Year_prejune == Year)) |> 
+  filter(FFD >= -30, FFD <= 30)
+```
+
+
+```{r}
+ggplot(FFD_weather, aes(FFD, January)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+jan_lm <- lm(FFD ~ January, data = FFD_weather)
+summary(jan_lm)
+```
+
+```{r}
+ggplot(FFD_weather, aes(FFD, February)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+feb_lm <- lm(FFD ~ February, data = FFD_weather)
+summary(feb_lm)
+```
+March
+
+```{r}
+ggplot(FFD_weather, aes(FFD, March)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+march_lm <- lm(FFD ~ March, data = FFD_weather)
+summary(march_lm)
+```
+
+April
+```{r}
+ggplot(FFD_weather, aes(FFD, April)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+april_lm <- lm(FFD ~ April, data = FFD_weather)
+summary(april_lm)
+```
+
+May
+```{r}
+ggplot(FFD_weather, aes(FFD, May)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+may_lm <- lm(FFD ~ May, data = FFD_weather)
+summary(may_lm)
+```
+
+
+```{r}
+FFD_df_prejun %>%
+  summarise(avg = mean(DOY_prejune))
+```
