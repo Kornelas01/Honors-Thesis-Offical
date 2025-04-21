@@ -167,66 +167,6 @@ Check FFD that are above 25
 ```
 
 
-January
-```{r}
-ggplot(FFD_weather, aes(FFD, January, , color = Scientific_name)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
-
-jan_lm <- lm(FFD ~ January, data = FFD_weather)
-summary(jan_lm)
-```
-
-```{r}
-FFD_weather %>% group_by(Year_pennie) %>%
-  summarise(DOY = mean(DOY_pennie),
-            Jan = mean(January),
-            March = mean(March)) %>%
-  ggplot(., aes(DOY, March)) +
-  geom_point() +
-  geom_smooth(method = "lm")
-```
-
-
-```{r}
-ggplot(FFD_weather, aes(FFD, February)) +
-  geom_point() +
-  geom_smooth(method = "lm")
-
-feb_lm <- lm(FFD ~ February, data = FFD_weather)
-summary(feb_lm)
-```
-March
-
-```{r}
-ggplot(FFD_weather, aes(FFD, March)) +
-  geom_point() +
-  geom_smooth(method = "lm")
-
-march_lm <- lm(FFD ~ March, data = FFD_weather)
-summary(march_lm)
-```
-
-April
-```{r}
-ggplot(FFD_weather, aes(April, FFD, color = Scientific_name)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
-
-april_lm <- lm(FFD ~ April, data = FFD_weather)
-summary(april_lm)
-```
-
-May
-```{r}
-ggplot(FFD_weather, aes(May, FFD)) +
-  geom_point() +
-  geom_smooth(method = "lm")
-
-may_lm <- lm(FFD ~ May, data = FFD_weather)
-summary(may_lm)
-```
-
 ### Early Flowering Species
 
 Plot start dates for only species with >= 10 years of data
@@ -308,12 +248,12 @@ prejune_FFD_mean_year <- prejune_FFD_df %>%
 
 Plot FFD 
 ```{r}
-ggplot(prejune_FFD_mean_year, aes(Year_prejune, mean_FFD)) +
+prejune_meanFFD_plot <- ggplot(prejune_FFD_mean_year, aes(Year_prejune, mean_FFD)) +
   geom_point() +
   geom_smooth(method = "lm") +
   theme_bw()
 
-
+ggsave("Prejune_Mean_FFD_Plot.png", prejune_meanFFD_plot)
 
 summary(lm(prejune_FFD_mean_year$mean_FFD ~ prejune_FFD_mean_year$Year_prejune))
 
@@ -328,18 +268,22 @@ Prejune_FFD_weather <- left_join(prejune_FFD_df, weather, join_by(Year_prejune =
 
 
 ```{r}
-ggplot(Prejune_FFD_weather, aes(FFD, January)) +
+Prejune_FFD_Jan_Plot <- ggplot(Prejune_FFD_weather, aes(FFD, January)) +
   geom_point() +
   geom_smooth(method = "lm")
+
+ggsave("Prejune_FFD_Jan.png", Prejune_FFD_Jan_Plot)
 
 jan_lm <- lm(FFD ~ January, data = Prejune_FFD_weather)
 summary(jan_lm)
 ```
 
 ```{r}
-ggplot(Prejune_FFD_weather, aes(FFD, February)) +
+Prejune_FFD_Feb_Plot <- ggplot(Prejune_FFD_weather, aes(FFD, February)) +
   geom_point() +
   geom_smooth(method = "lm")
+
+ggsave("Prejune_FFD_Feb.png", Prejune_FFD_Feb_Plot)
 
 feb_lm <- lm(FFD ~ February, data = Prejune_FFD_weather)
 summary(feb_lm)
@@ -347,9 +291,11 @@ summary(feb_lm)
 March
 
 ```{r}
-ggplot(Prejune_FFD_weather, aes(FFD, March)) +
+Prejune_FFD_Mar_Plot <- ggplot(Prejune_FFD_weather, aes(FFD, March)) +
   geom_point() +
   geom_smooth(method = "lm")
+
+ggsave("Prejune_FFD_Mar.png", Prejune_FFD_Mar_Plot)
 
 march_lm <- lm(FFD ~ March, data = Prejune_FFD_weather)
 summary(march_lm)
@@ -357,9 +303,11 @@ summary(march_lm)
 
 April
 ```{r}
-ggplot(Prejune_FFD_weather, aes(FFD, April)) +
+Prejune_FFD_Apr_Plot <- ggplot(Prejune_FFD_weather, aes(FFD, April)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE)
+
+ggsave("Prejune_FFD_Apr.png", Prejune_FFD_Mar_Plot)
 
 april_lm <- lm(FFD ~ April, data = Prejune_FFD_weather)
 summary(april_lm)
@@ -367,9 +315,11 @@ summary(april_lm)
 
 May
 ```{r}
-ggplot(Prejune_FFD_weather, aes(FFD, May)) +
+Prejune_FFD_May_Plot <- ggplot(Prejune_FFD_weather, aes(FFD, May)) +
   geom_point() +
   geom_smooth(method = "lm")
+
+ggsave("Prejune_FFD_May.png", Prejune_FFD_May_Plot)
 
 may_lm <- lm(FFD ~ May, data = Prejune_FFD_weather)
 summary(may_lm)
